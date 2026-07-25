@@ -74,3 +74,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+
+ALLOWED_HOSTS = [
+    'quantum-graph-ij8i.onrender.com',
+    'localhost',
+    '127.0.0.1',
+]
