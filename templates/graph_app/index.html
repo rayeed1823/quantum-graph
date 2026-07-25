@@ -1,0 +1,120 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Graph</title>
+
+    <!-- 1. jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <!-- 2. MathQuill CSS & JS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
+
+    <!-- 3. Math.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+    <!-- Sidebar Preset Menu -->
+    <div id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <h2>Presets</h2>
+            <button id="close-menu">&times;</button>
+        </div>
+        <div class="menu-content">
+            {% for category, items in presets.items %}
+                <div class="category">
+                    <h3>{{ category }}</h3>
+                    {% for item in items %}
+                        <button class="preset-btn" data-latex="{{ item.latex }}">
+                            {{ item.name }}
+                        </button>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Main Viewport -->
+    <div class="main-container">
+        <!-- Top Menu Button -->
+        <div class="top-bar">
+            <button id="menu-toggle" class="glow-btn">
+                <span>&#9776;</span> QUANTUM GRAPH
+            </button>
+        </div>
+
+        <!-- The Infinite Canvas -->
+        <canvas id="graphCanvas"></canvas>
+
+        <!-- Floating Bottom Dock -->
+        <div id="dock" class="dock">
+            <div class="dock-header">
+                <span>EQUATION INPUT</span>
+                <div class="header-controls">
+                    <button id="keypad-toggle-btn" title="Toggle On-Screen Keyboard">&#x2328;</button>
+                    <button id="minimize-btn">&#8722;</button>
+                </div>
+            </div>
+            <div class="dock-body" id="dock-body">
+                <div class="input-row">
+                    <label>y = </label>
+                    <span id="math-field" class="mq-math-field"></span>
+                </div>
+
+                <!-- On-Screen Virtual Calculator Keypad -->
+                <div id="virtual-keypad" class="virtual-keypad">
+                    <div class="keypad-grid">
+                        <!-- Row 1: Variables & Core Structure -->
+                        <button class="key-btn func var-btn" data-write="x">x</button>
+                        <button class="key-btn func var-btn" data-write="y">y</button>
+                        <button class="key-btn func" data-cmd="^">x<sup>n</sup></button>
+                        <button class="key-btn func" data-cmd="/">a/b</button>
+                        <button class="key-btn func" data-cmd="\sqrt">&radic;x</button>
+                        <button class="key-btn action" data-action="clear">AC</button>
+                        <button class="key-btn action" data-action="backspace">&#9003;</button>
+
+                        <!-- Row 2: Trig & Digits 7 8 9 -->
+                        <button class="key-btn func" data-cmd="\sin">sin</button>
+                        <button class="key-btn func" data-cmd="\cos">cos</button>
+                        <button class="key-btn num" data-write="7">7</button>
+                        <button class="key-btn num" data-write="8">8</button>
+                        <button class="key-btn num" data-write="9">9</button>
+                        <button class="key-btn op" data-write="*">&times;</button>
+
+                        <!-- Row 3: Trig/Log & Digits 4 5 6 -->
+                        <button class="key-btn func" data-cmd="\tan">tan</button>
+                        <button class="key-btn func" data-cmd="\ln">ln</button>
+                        <button class="key-btn num" data-write="4">4</button>
+                        <button class="key-btn num" data-write="5">5</button>
+                        <button class="key-btn num" data-write="6">6</button>
+                        <button class="key-btn op" data-write="-">&minus;</button>
+
+                        <!-- Row 4: Brackets & Digits 1 2 3 -->
+                        <button class="key-btn func" data-write="(">(</button>
+                        <button class="key-btn func" data-write=")">)</button>
+                        <button class="key-btn num" data-write="1">1</button>
+                        <button class="key-btn num" data-write="2">2</button>
+                        <button class="key-btn num" data-write="3">3</button>
+                        <button class="key-btn op" data-write="+">&#43;</button>
+
+                        <!-- Row 5: Constants & 0 . = -->
+                        <button class="key-btn func" data-cmd="\pi">&pi;</button>
+                        <button class="key-btn func" data-write="e">e</button>
+                        <button class="key-btn num span-2" data-write="0">0</button>
+                        <button class="key-btn num" data-write=".">.</button>
+                        <button class="key-btn action glow-pink" data-action="draw">=</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'js/graph.js' %}"></script>
+</body>
+</html>
