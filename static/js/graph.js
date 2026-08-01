@@ -40,34 +40,40 @@ function latexToMathJS(latex) {
     if (!latex) return "";
     let expr = latex;
 
-    // 1. Convert LaTeX left/right sizing decorators (\left( -> (, \right) -> ))
+    // 1. Convert MathQuill Absolute values: \left|x\right| -> abs(x)
+    expr = expr.replace(/\\left\|(.*?)\\right\|/g, 'abs($1)');
+
+    // 2. Convert LaTeX left/right sizing decorators (\left( -> (, \right) -> ))
     expr = expr.replace(/\\left\(/g, '(');
     expr = expr.replace(/\\right\)/g, ')');
     expr = expr.replace(/\\left|\\right/g, '');
 
-    // 2. Convert standard fractions: \frac{a}{b} -> ((a)/(b))
+    // 3. Convert fractions: \frac{a}{b} -> ((a)/(b))
     expr = expr.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '(($1)/($2))');
 
-    // 3. Convert powers: x^{2} or x^2 -> x^(2)
+    // 4. Convert powers: x^{2} -> x^(2)
     expr = expr.replace(/\^{([^}]+)}/g, '^($1)');
 
-    // 4. Convert square roots: \sqrt{x} -> sqrt(x)
+    // 5. Convert square roots: \sqrt{x} -> sqrt(x)
     expr = expr.replace(/\\sqrt\{([^}]+)\}/g, 'sqrt($1)');
 
-    // 5. Convert trig and log functions
+    // 6. Handle Logarithms correctly (\log_{10}(x) or \log(x))
+    expr = expr.replace(/\\log_\{10\}/g, 'log10');
+    expr = expr.replace(/\\log/g, 'log10');
+    expr = expr.replace(/\\ln/g, 'log');
+
+    // 7. Convert Trig functions
     expr = expr.replace(/\\sin/g, 'sin');
     expr = expr.replace(/\\cos/g, 'cos');
     expr = expr.replace(/\\tan/g, 'tan');
-    expr = expr.replace(/\\ln/g, 'log');
-    expr = expr.replace(/\\log/g, 'log10');
 
-    // 6. Convert constants
+    // 8. Convert Constants
     expr = expr.replace(/\\pi/g, 'PI');
 
-    // 7. Insert explicit multiplication for implicit terms:
-    // e.g., 2x -> 2*x, 2(x) -> 2*(x), x(x) -> x*(x)
+    // 9. Fix implicit multiplication: 2x -> 2*x, 2(x) -> 2*(x), (x)(y) -> (x)*(y)
     expr = expr.replace(/(\d)([a-zA-Z\(])/g, '$1*$2');
     expr = expr.replace(/(\))([a-zA-Z0-9\(])/g, '$1*$2');
+    expr = expr.replace(/(\d)(sin|cos|tan|log|sqrt|abs)/g, '$1*$2');
 
     return expr;
 }
@@ -169,7 +175,7 @@ function plotEquation() {
                 isFirstPoint = true; // Break line path on invalid values
             }
         } catch (err) {
-            // Silently catch incomplete expressions
+            // Silently catch incomplete expressions while user types
         }
     }
     ctx.stroke();
@@ -229,9 +235,8 @@ function setupKeypad() {
     }
 
     document.querySelectorAll('.key-btn').forEach(button => {
-        // Prevent button click from stealing focus away from MathQuill field
         button.addEventListener('mousedown', (e) => {
-            e.preventDefault();
+            e.preventDefault(); // Prevents focus loss from MathQuill
         });
 
         button.addEventListener('click', (e) => {
@@ -265,9 +270,7 @@ document.querySelectorAll('.preset-btn').forEach(button => {
     button.addEventListener('click', (e) => {
         let latex = e.target.getAttribute('data-latex');
         if (mathField) {
-            mathField.latex(latex);
-            currentRawExpr = latexToMathJS(latex);
-            draw();
+            mathField.latex(latex); // Automatically triggers edit handler
         } else {
             currentRawExpr = latexToMathJS(latex);
             draw();
