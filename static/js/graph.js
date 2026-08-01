@@ -37,23 +37,37 @@ $(document).ready(function() {
 
 // Convert LaTeX math notation to MathJS executable syntax
 function latexToMathJS(latex) {
+    if (!latex) return "";
     let expr = latex;
 
-    // Fractions: \frac{a}{b} -> (a)/(b)
-    expr = expr.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)');
-    // Powers: x^{2} or x^2 -> x^(2)
+    // 1. Convert LaTeX left/right sizing decorators (\left( -> (, \right) -> ))
+    expr = expr.replace(/\\left\(/g, '(');
+    expr = expr.replace(/\\right\)/g, ')');
+    expr = expr.replace(/\\left|\\right/g, '');
+
+    // 2. Convert standard fractions: \frac{a}{b} -> ((a)/(b))
+    expr = expr.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '(($1)/($2))');
+
+    // 3. Convert powers: x^{2} or x^2 -> x^(2)
     expr = expr.replace(/\^{([^}]+)}/g, '^($1)');
-    // Square Roots
+
+    // 4. Convert square roots: \sqrt{x} -> sqrt(x)
     expr = expr.replace(/\\sqrt\{([^}]+)\}/g, 'sqrt($1)');
-    // Trig functions
+
+    // 5. Convert trig and log functions
     expr = expr.replace(/\\sin/g, 'sin');
     expr = expr.replace(/\\cos/g, 'cos');
     expr = expr.replace(/\\tan/g, 'tan');
     expr = expr.replace(/\\ln/g, 'log');
+    expr = expr.replace(/\\log/g, 'log10');
+
+    // 6. Convert constants
     expr = expr.replace(/\\pi/g, 'PI');
-    expr = expr.replace(/\\left\(|\\right\)/g, '');
-    // Implicit multiplication: 2x -> 2*x
+
+    // 7. Insert explicit multiplication for implicit terms:
+    // e.g., 2x -> 2*x, 2(x) -> 2*(x), x(x) -> x*(x)
     expr = expr.replace(/(\d)([a-zA-Z\(])/g, '$1*$2');
+    expr = expr.replace(/(\))([a-zA-Z0-9\(])/g, '$1*$2');
 
     return expr;
 }
@@ -140,13 +154,19 @@ function plotEquation() {
 
         try {
             let mathY = math.evaluate(currentRawExpr, { x: mathX, e: Math.E });
-            let pixelY = offsetY - (mathY * scale);
 
-            if (isFirstPoint) {
-                ctx.moveTo(pixelX, pixelY);
-                isFirstPoint = false;
+            // Check for valid numbers (skips NaN or Infinity from asymptotes like tan(x))
+            if (typeof mathY === 'number' && !isNaN(mathY) && isFinite(mathY)) {
+                let pixelY = offsetY - (mathY * scale);
+
+                if (isFirstPoint) {
+                    ctx.moveTo(pixelX, pixelY);
+                    isFirstPoint = false;
+                } else {
+                    ctx.lineTo(pixelX, pixelY);
+                }
             } else {
-                ctx.lineTo(pixelX, pixelY);
+                isFirstPoint = true; // Break line path on invalid values
             }
         } catch (err) {
             // Silently catch incomplete expressions
@@ -246,6 +266,8 @@ document.querySelectorAll('.preset-btn').forEach(button => {
         let latex = e.target.getAttribute('data-latex');
         if (mathField) {
             mathField.latex(latex);
+            currentRawExpr = latexToMathJS(latex);
+            draw();
         } else {
             currentRawExpr = latexToMathJS(latex);
             draw();
